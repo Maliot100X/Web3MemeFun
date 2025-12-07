@@ -1,73 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web3MemeFun</title>
+  <meta charset="UTF-8" />
+  <title>Web3MemeFun</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- STYLE -->
-    <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 
-    <!-- FIREBASE SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth-compat.js"></script>
+  <!-- Firebase (compat version for browser) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore-compat.js"></script>
 
-    <!-- TELEGRAM SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Telegram SDK (used if opened inside Telegram, ignored in browser) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+  <div id="app">
 
-    <div id="app">
+    <header class="header">
+      <h1>Web3MemeFun</h1>
+      <p id="userId" class="userid">User: loading…</p>
+      <p id="userBalance" class="balance">Balance: loading…</p>
+    </header>
 
-        <!-- HEADER -->
-        <header>
-            <h1>Web3MemeFun</h1>
-            <p id="userId">User: loading...</p>
-            <p id="userBalance">Balance: loading...</p>
-        </header>
+    <nav class="tabs">
+      <button onclick="openTab('market')">Market</button>
+      <button onclick="openTab('create')">Create Token</button>
+      <button onclick="openTab('portfolio')">My Tokens</button>
+      <button onclick="openTab('daily')">Daily Bonus</button>
+    </nav>
 
-        <!-- NAV -->
-        <nav>
-            <button onclick="openTab('market')">Market</button>
-            <button onclick="openTab('create')">Create Token</button>
-            <button onclick="openTab('portfolio')">My Tokens</button>
-            <button onclick="openTab('daily')">Daily Bonus</button>
-        </nav>
+    <!-- MARKET TAB -->
+    <section id="market" class="tab active">
+      <h2>Market</h2>
+      <div id="marketList"></div>
+    </section>
 
-        <!-- MARKET TAB -->
-        <div id="market" class="tab">
-            <h2>Market</h2>
-            <div id="marketList"></div>
-        </div>
+    <!-- CREATE TAB -->
+    <section id="create" class="tab">
+      <h2>Create Meme Token</h2>
+      <div class="card">
+        <label>Name</label>
+        <input id="tokenName" placeholder="Example: CATGOD" />
 
-        <!-- CREATE TAB -->
-        <div id="create" class="tab">
-            <h2>Create Token</h2>
-            <input id="tokenName" placeholder="Token Name">
-            <input id="tokenTicker" placeholder="Ticker (e.g. DOGE)">
-            <input id="tokenImg" placeholder="Image URL">
-            <input id="preBuy" placeholder="Pre-buy (USDT)" value="0">
-            <button onclick="createToken()">LAUNCH (2000 USDT)</button>
-        </div>
+        <label>Ticker</label>
+        <input id="tokenTicker" placeholder="CAT" />
 
-        <!-- PORTFOLIO TAB -->
-        <div id="portfolio" class="tab">
-            <h2>Your Portfolio</h2>
-            <div id="portfolioList"></div>
-        </div>
+        <label>Image URL</label>
+        <input id="tokenImg" placeholder="https://image-url.png" />
 
-        <!-- DAILY BONUS -->
-        <div id="daily" class="tab">
-            <h2>Daily Bonus</h2>
-            <p>Claim 500 USDT every 24 hours</p>
-            <button onclick="claimDaily()">CLAIM</button>
-        </div>
+        <label>Pre-buy (USDT)</label>
+        <input id="preBuy" type="number" value="0" />
 
+        <p class="hint">Launch cost: 2000 USDT, supply: 1,000,000,000</p>
+
+        <button onclick="createToken()">🚀 Launch Token</button>
+      </div>
+    </section>
+
+    <!-- PORTFOLIO TAB -->
+    <section id="portfolio" class="tab">
+      <h2>Your Portfolio</h2>
+      <div id="portfolioList"></div>
+    </section>
+
+    <!-- DAILY TAB -->
+    <section id="daily" class="tab">
+      <h2>Daily Bonus</h2>
+      <p>Claim 500 USDT once per day.</p>
+      <button onclick="claimDaily()">Claim 500 USDT</button>
+    </section>
+
+    <!-- TRADE PANEL -->
+    <div id="tradePanel" class="trade-panel hidden">
+      <div class="trade-box">
+        <h3 id="tradeTitle">Token</h3>
+        <p id="tradePrice">Price: -</p>
+        <p id="tradeMC">MC: -</p>
+
+        <label>Buy amount (USDT)</label>
+        <input id="buyAmount" type="number" />
+
+        <button class="buy-btn" onclick="buyToken()">BUY</button>
+
+        <label>Sell amount (% of holdings)</label>
+        <input id="sellPercent" type="number" placeholder="e.g. 25" />
+
+        <button class="sell-btn" onclick="sellToken()">SELL</button>
+
+        <button class="close-btn" onclick="closeTrade()">Close</button>
+      </div>
     </div>
 
-    <!-- APP LOGIC -->
-    <script src="app.js"></script>
+  </div>
 
+  <script src="app.js"></script>
 </body>
 </html>
