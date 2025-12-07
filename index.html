@@ -33,7 +33,15 @@
     <!-- MARKET TAB -->
     <section id="market" class="tab active">
       <h2>Market</h2>
-      <div id="marketList"></div>
+
+      <h3 class="section-title">🟢 New launches</h3>
+      <div id="marketNew"></div>
+
+      <h3 class="section-title">🟡 Heating up</h3>
+      <div id="marketMid"></div>
+
+      <h3 class="section-title">🔵 Graduated</h3>
+      <div id="marketGrad"></div>
     </section>
 
     <!-- CREATE TAB -->
@@ -52,7 +60,7 @@
         <label>Pre-buy (USDT)</label>
         <input id="preBuy" type="number" value="0" />
 
-        <p class="hint">Launch cost: 2000 USDT, supply: 1,000,000,000</p>
+        <p class="hint">Launch cost: 2000 USDT • Supply: 1,000,000,000</p>
 
         <button onclick="createToken()">🚀 Launch Token</button>
       </div>
@@ -71,12 +79,22 @@
       <button onclick="claimDaily()">Claim 500 USDT</button>
     </section>
 
-    <!-- TRADE PANEL -->
+    <!-- TOKEN DETAIL / TRADE PANEL -->
     <div id="tradePanel" class="trade-panel hidden">
       <div class="trade-box">
-        <h3 id="tradeTitle">Token</h3>
-        <p id="tradePrice">Price: -</p>
-        <p id="tradeMC">MC: -</p>
+        <div class="trade-header">
+          <img id="tradeImg" class="trade-avatar" src="" alt="">
+          <div>
+            <h3 id="tradeTitle">Token</h3>
+            <p id="tradeStage" class="stage-label"></p>
+          </div>
+        </div>
+
+        <div class="trade-stats" id="tradeStats">
+          <!-- filled from JS -->
+        </div>
+
+        <div id="priceChart" class="chart-box"></div>
 
         <label>Buy amount (USDT)</label>
         <input id="buyAmount" type="number" />
