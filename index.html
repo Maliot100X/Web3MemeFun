@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Web3MemeFun</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Telegram Mini App JS -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>Web3MemeFun</h1>
+  <p id="balance" class="balance">Balance: Loading...</p>
+  <p id="userid" class="userid"></p>
+</div>
+
+<div class="tge-section">
+  <h2>🔥 Official TGE</h2>
+  <div class="tge-card">
+    <h3>Jesus Meme Token</h3>
+    <p>Contract: CSZ85c44SJYe7CGf1gtMVb2bs35E7igDA6jcq6HKpump</p>
+    <a href="https://pump.fun/coin/CSZ85c44SJYe7CGf1gtMVb2bs35E7igDA6jcq6HKpump" target="_blank" class="btn">Open TGE</a>
+  </div>
+</div>
+
+<div class="tabs">
+  <button onclick="openTab('dashboard')">Dashboard</button>
+  <button onclick="openTab('market')">Market</button>
+  <button onclick="openTab('create')">Create Token</button>
+  <button onclick="openTab('portfolio')">Portfolio</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="tab active">
+  <h2>Daily Bonus</h2>
+  <button onclick="claimDaily()">Claim +1000 USDT</button>
+
+  <h2>Tasks</h2>
+  <button onclick="taskMarket()">Check a Market Token (+200)</button>
+</div>
+
+<!-- MARKET -->
+<div id="market" class="tab">
+  <h2>Global Market</h2>
+  <div id="market-list"></div>
+</div>
+
+<!-- CREATE TOKEN -->
+<div id="create" class="tab">
+  <h2>Create New Meme Token</h2>
+  <p>Cost: 2000 USDT</p>
+  <button onclick="createToken()">Launch Token</button>
+</div>
+
+<!-- PORTFOLIO -->
+<div id="portfolio" class="tab">
+  <h2>Your Tokens</h2>
+  <div id="portfolio-list"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
