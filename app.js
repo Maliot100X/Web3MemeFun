@@ -317,3 +317,104 @@ async function sellToken() {
 
 
 /* --- PART 3 COMPLETE --- */
+
+/* ------------------------------
+   PART 4 — FAST BOT ENGINE (20–40s)
+--------------------------------*/
+
+// RANDOM HELPERS
+function rand(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+function chance(p) {
+    return Math.random() < p;
+}
+
+// MAIN BOT LOOP
+async function runBots() {
+    let snap = await tokenRef.get();
+
+    snap.forEach(async doc => {
+        let t = doc.data();
+
+        // Skip tokens below MC 2000 (dead tokens)
+        if (t.mc < 2000) return;
+
+        // RANDOM SMALL BUY
+        if (chance(0.30)) { // 30% chance
+            let amount = rand(20, 120);  // small buys
+            processBotBuy(t, amount);
+        }
+
+        // RANDOM SMALL SELL
+        if (chance(0.20)) { // 20% chance
+            let amount = rand(15, 90);
+            processBotSell(t, amount);
+        }
+
+        // RANDOM WHALE BUY (BIG PUMP)
+        if (chance(0.05)) { // 5% chance
+            let amount = rand(300, 1200);
+            processBotBuy(t, amount, true);
+        }
+
+        // RANDOM WHALE DUMP
+        if (chance(0.03)) { // 3% chance
+            let amount = rand(250, 900);
+            processBotSell(t, amount, true);
+        }
+
+    });
+
+    // WAIT 20–40 seconds then repeat
+    let wait = rand(20000, 40000);
+    console.log("Bots sleeping for", Math.floor(wait/1000), "seconds");
+    setTimeout(runBots, wait);
+}
+
+
+
+// --- BOT BUY FUNCTION ---
+async function processBotBuy(t, amount, whale = false) {
+
+    let fee = amount * 0.01;
+    let net = amount - fee;
+
+    // Increase liquidity
+    t.liquidity += net;
+    t.mc = t.liquidity;
+
+    t.price = t.liquidity / t.supply;
+    t.buys++;
+
+    if (whale) console.log("🐋 WHALE BUY on", t.ticker, amount);
+
+    await tokenRef.doc(t.id).update(t);
+}
+
+
+
+// --- BOT SELL FUNCTION ---
+async function processBotSell(t, amount, whale = false) {
+
+    let fee = amount * 0.01;
+    let net = amount - fee;
+
+    // Liquidity goes DOWN
+    t.liquidity -= net;
+    if (t.liquidity < 0) t.liquidity = 0;
+
+    t.mc = t.liquidity;
+    t.price = t.liquidity / t.supply;
+    t.sells++;
+
+    if (whale) console.log("🐋 WHALE DUMP on", t.ticker, amount);
+
+    await tokenRef.doc(t.id).update(t);
+}
+
+
+
+// START BOTS
+setTimeout(runBots, 5000); // wait 5 sec after page load
