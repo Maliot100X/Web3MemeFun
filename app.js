@@ -418,3 +418,103 @@ async function processBotSell(t, amount, whale = false) {
 
 // START BOTS
 setTimeout(runBots, 5000); // wait 5 sec after page load
+/* ------------------------------
+   PART 5 — PORTFOLIO + TASKS + REFRESH ENGINE
+--------------------------------*/
+
+// --- DAILY BONUS ---
+async function claimDaily() {
+    let ref = db.collection("users").doc(USER_ID);
+    let snap = await ref.get();
+    let data = snap.data();
+
+    let now = Date.now();
+    let oneDay = 24 * 60 * 60 * 1000;
+
+    if (now - data.lastDaily < oneDay) {
+        alert("You already claimed your daily bonus!");
+        return;
+    }
+
+    USER_BALANCE += 1000;
+
+    await ref.update({
+        balance: USER_BALANCE,
+        lastDaily: now
+    });
+
+    loadUser();
+    alert("You claimed +1000 USDT!");
+}
+
+
+
+// --- MARKET CHECK TASK ---
+async function taskMarket() {
+    USER_BALANCE += 200;
+
+    await db.collection("users").doc(USER_ID).update({
+        balance: USER_BALANCE
+    });
+
+    loadUser();
+    alert("Checked a market token! +200 USDT");
+}
+
+
+
+// --- PORTFOLIO RENDER ---
+async function loadPortfolio() {
+    let box = document.getElementById("portfolioList");
+    box.innerHTML = "";
+
+    let totalValue = 0;
+
+    for (let tokenId in USER_PORTFOLIO) {
+
+        // TOKEN DATA
+        let snap = await tokenRef.doc(tokenId).get();
+        if (!snap.exists) continue;
+
+        let t = snap.data();
+
+        let hold = USER_PORTFOLIO[tokenId].amount;
+        let usdValue = hold * t.price;
+
+        totalValue += usdValue;
+
+        box.innerHTML += `
+            <div class="market-item">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <img src="${t.img}" style="width:40px;height:40px;border-radius:50%;">
+                    <div>
+                        <b>${t.name} (${t.ticker})</b><br>
+                        <span style="color:#0f0;">
+                            ${hold.toLocaleString()} tokens<br>
+                            Value: ${usdValue.toFixed(2)} USDT
+                        </span>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    box.innerHTML += `
+        <h3 style="margin-top:20px;">TOTAL PORTFOLIO VALUE: 
+        <span style="color:#0f0">${totalValue.toFixed(2)} USDT</span></h3>`;
+}
+
+
+
+// --- AUTO REFRESH MARKET + PORTFOLIO ---
+setInterval(() => {
+    loadMarketTokens();
+    loadUser();
+    loadPortfolio();
+}, 6000); // every 6 seconds
+
+
+
+/* ------- THE GAME IS NOW FULLY COMPLETE -------- */
+console.log("Web3MemeFun FULL ENGINE loaded (PART 5 COMPLETE)");
+
+
