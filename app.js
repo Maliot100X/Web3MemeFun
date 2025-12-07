@@ -78,3 +78,88 @@ loadMarket();
 
 // --- PART 1 COMPLETE ---
 console.log("Web3MemeFun Engine Loaded (PART 1)");
+/* ------------------------------
+   PART 2 — TOKEN CREATION ENGINE
+--------------------------------*/
+
+// GLOBAL STORAGE FOR MARKET
+let MARKET = [];
+
+// FIREBASE TOKEN COLLECTION
+const tokenRef = db.collection("tokens");
+
+
+// --- CREATE TOKEN FUNCTION ---
+async function createToken() {
+
+    let name = document.getElementById("tokenName").value.trim();
+    let ticker = document.getElementById("tokenTicker").value.trim().toUpperCase();
+    let img = document.getElementById("tokenImg").value.trim();
+    let preBuy = parseInt(document.getElementById("preBuy").value);
+
+    if (!name || !ticker || !img) {
+        alert("Enter all fields!");
+        return;
+    }
+
+    // COST: 2000 USDT
+    if (USER_BALANCE < 2000) {
+        alert("You need at least 2000 USDT to launch a token.");
+        return;
+    }
+
+    // DEDUCT COST
+    USER_BALANCE -= 2000;
+
+    // UPDATE USER BALANCE IN FIREBASE
+    await db.collection("users").doc(USER_ID).update({
+        balance: USER_BALANCE
+    });
+
+    document.getElementById("userBalance").innerText =
+        "Balance: " + USER_BALANCE.toLocaleString() + " USDT";
+
+    // TOKEN START SETTINGS (pumpfun style)
+    let supply = 1_000_000_000; // 1B
+    let liquidity = 4000 + preBuy; // starting MC
+    let price = liquidity / supply;
+
+    // TOKEN OBJECT
+    let token = {
+        id: Date.now().toString(),
+        name: name,
+        ticker: ticker,
+        img: img,
+        supply: supply,
+        liquidity: liquidity,
+        price: price,
+        created: Date.now(),
+        creator: USER_ID,
+        buys: 0,
+        sells: 0,
+        mc: liquidity,
+        holders: {}
+    };
+
+    // SAVE TOKEN TO FIREBASE
+    await tokenRef.doc(token.id).set(token);
+
+    // IF USER PREBOUGHT
+    if (preBuy > 0) {
+
+        // add tokens to creator portfolio
+        let tokensReceived = preBuy / price;
+
+        USER_PORTFOLIO[token.id] = {
+            amount: tokensReceived,
+            invest: preBuy
+        };
+
+        await db.collection("users").doc(USER_ID).update({
+            portfolio: USER_PORTFOLIO
+        });
+    }
+
+    alert("🚀 Token launched!");
+    loadMarketTokens();
+}
