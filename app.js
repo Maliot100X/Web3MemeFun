@@ -33,29 +33,35 @@ let PORTFOLIO = {};
 let CURRENT_TOKEN = null;
 
 // ---------- SAFE HELPERS ----------
+function toNum(v, def = 0) {
+  const n = Number(v);
+  return isFinite(n) ? n : def;
+}
+
 function clampNumber(x, min, max) {
-  if (!isFinite(x)) return min;
+  x = toNum(x, min);
   if (x < min) return min;
   if (x > max) return max;
   return x;
 }
 
 function normalizeToken(t) {
-  if (!t.supply || t.supply <= 0 || !isFinite(t.supply)) {
-    t.supply = 1_000_000_000;
-  }
-  if (!isFinite(t.liquidity) || t.liquidity < 0) {
-    t.liquidity = 0;
-  }
+  t.supply = toNum(t.supply, 1_000_000_000);
+  if (t.supply <= 0) t.supply = 1_000_000_000;
+
+  t.liquidity = toNum(t.liquidity, 0);
+  if (t.liquidity < 0) t.liquidity = 0;
+
   t.price = t.liquidity / t.supply;
-  if (!isFinite(t.price) || t.price <= 0) {
-    t.price = 0.000000000001;
-  }
+  if (!isFinite(t.price) || t.price <= 0) t.price = 0.000000000001;
+
   t.mc = t.liquidity;
   if (!isFinite(t.mc) || t.mc < 0) t.mc = 0;
-  if (!t.buys) t.buys = 0;
-  if (!t.sells) t.sells = 0;
-  if (!t.volume) t.volume = 0;
+
+  t.buys = toNum(t.buys, 0);
+  t.sells = toNum(t.sells, 0);
+  t.volume = toNum(t.volume, 0);
+
   return t;
 }
 
@@ -95,9 +101,9 @@ initUser();
 async function loadUser() {
   const ref = db.collection("users").doc(USER_ID);
   const snap = await ref.get();
-  const data = snap.data();
+  const data = snap.data() || {};
 
-  USER_BAL = data.balance || 0;
+  USER_BAL = toNum(data.balance, 0);
   PORTFOLIO = data.portfolio || {};
 
   document.getElementById("userBalance").innerText =
@@ -166,7 +172,7 @@ async function createToken() {
   const name = document.getElementById("tokenName").value.trim();
   const ticker = document.getElementById("tokenTicker").value.trim().toUpperCase();
   const img = document.getElementById("tokenImg").value.trim();
-  const pre = parseFloat(document.getElementById("preBuy").value) || 0;
+  const pre = toNum(document.getElementById("preBuy").value, 0);
 
   if (!name || !ticker || !img) {
     alert("Fill all fields.");
@@ -179,6 +185,7 @@ async function createToken() {
   }
 
   USER_BAL -= 2000;
+  USER_BAL = clampNumber(USER_BAL, 0, 10_000_000_000);
   await db.collection("users").doc(USER_ID).update({ balance: USER_BAL });
 
   const supply = 1_000_000_000;
@@ -243,8 +250,8 @@ async function loadMarket() {
     const priceText = t.price.toFixed(12);
     const width = clampNumber(t.mc / 400, 5, 100);
 
-    const html = `
-      <div class="card">
+    const cardHtml = `
+      <div class="card" onclick="openTrade('${t.id}')">
         <div class="market-row">
           <img src="${t.img}" width="40" height="40" />
           <div class="market-info">
@@ -252,32 +259,20 @@ async function loadMarket() {
             <span class="price-text">
               Price: ${priceText} USDT<br/>
               MC: ${mcText} USDT<br/>
-              Vol: ${Math.floor(t.volume || 0).toLocaleString()} USDT • Buys: ${t.buys} • Sells: ${t.sells}
+              Vol: ${Math.floor(t.volume || 0).toLocaleString()} • Buys: ${t.buys} • Sells: ${t.sells}
             </span><br/>
             <span class="stage-pill ${
               stage === "NEW" ? "stage-new" :
               stage === "MID" ? "stage-mid" : "stage-grad"
             }">${getStageText(t)}</span>
-            <div class="chart-box">
-              <div class="chart-row">
-                <div class="chart-bar" style="height:${width * 0.4}px"></div>
-                <div class="chart-bar" style="height:${width * 0.6}px"></div>
-                <div class="chart-bar" style="height:${width * 0.5}px"></div>
-                <div class="chart-bar down" style="height:${width * 0.3}px"></div>
-                <div class="chart-bar" style="height:${width * 0.7}px"></div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <button onclick="openTrade('${t.id}')">View</button>
           </div>
         </div>
       </div>
     `;
 
-    if (stage === "NEW") newBox.innerHTML += html;
-    else if (stage === "MID") midBox.innerHTML += html;
-    else gradBox.innerHTML += html;
+    if (stage === "NEW") newBox.innerHTML += cardHtml;
+    else if (stage === "MID") midBox.innerHTML += cardHtml;
+    else gradBox.innerHTML += cardHtml;
   });
 }
 
@@ -299,7 +294,7 @@ async function loadPortfolio() {
     if (!snap.exists) continue;
     let t = normalizeToken(snap.data());
 
-    const hold = PORTFOLIO[tid].amount;
+    const hold = toNum(PORTFOLIO[tid].amount, 0);
     const value = hold * t.price;
     totalValue += isFinite(value) ? value : 0;
 
@@ -324,7 +319,7 @@ async function loadPortfolio() {
 async function claimDaily() {
   const ref = db.collection("users").doc(USER_ID);
   const snap = await ref.get();
-  const data = snap.data();
+  const data = snap.data() || {};
 
   const now = Date.now();
   if (data.lastDaily && now - data.lastDaily < 24 * 60 * 60 * 1000) {
@@ -333,6 +328,7 @@ async function claimDaily() {
   }
 
   USER_BAL += 500;
+  USER_BAL = clampNumber(USER_BAL, 0, 10_000_000_000);
 
   await ref.update({
     balance: USER_BAL,
@@ -357,7 +353,7 @@ async function openTrade(id) {
     `${getStageText(t)} • MC: ${Math.floor(t.mc).toLocaleString()} USDT`;
 
   const statsDiv = document.getElementById("tradeStats");
-  const userHold = PORTFOLIO[t.id]?.amount || 0;
+  const userHold = toNum(PORTFOLIO[t.id]?.amount, 0);
   const userVal = userHold * t.price;
 
   statsDiv.innerHTML = `
@@ -402,7 +398,7 @@ function renderChart(t) {
 // ---------- BUY ----------
 async function buyToken() {
   if (!CURRENT_TOKEN) return;
-  const amt = parseFloat(document.getElementById("buyAmount").value);
+  const amt = toNum(document.getElementById("buyAmount").value, 0);
   if (!amt || amt <= 0) return alert("Invalid amount");
   if (amt > USER_BAL) return alert("Not enough balance");
 
@@ -422,8 +418,8 @@ async function buyToken() {
   if (!PORTFOLIO[t.id]) {
     PORTFOLIO[t.id] = { amount: 0, invest: 0 };
   }
-  PORTFOLIO[t.id].amount += tokens;
-  PORTFOLIO[t.id].invest += amt;
+  PORTFOLIO[t.id].amount = toNum(PORTFOLIO[t.id].amount, 0) + tokens;
+  PORTFOLIO[t.id].invest = toNum(PORTFOLIO[t.id].invest, 0) + amt;
 
   await db.collection("users").doc(USER_ID).update({ portfolio: PORTFOLIO });
 
@@ -443,7 +439,7 @@ async function buyToken() {
 // ---------- SELL ----------
 async function sellToken() {
   if (!CURRENT_TOKEN) return;
-  const percent = parseFloat(document.getElementById("sellPercent").value);
+  const percent = toNum(document.getElementById("sellPercent").value, 0);
   if (!percent || percent <= 0 || percent > 100) {
     return alert("Enter % between 1 and 100");
   }
@@ -452,18 +448,18 @@ async function sellToken() {
   const snap = await tokenRef.get();
   let t = normalizeToken(snap.data());
 
-  if (!PORTFOLIO[t.id] || PORTFOLIO[t.id].amount <= 0) {
+  if (!PORTFOLIO[t.id] || toNum(PORTFOLIO[t.id].amount, 0) <= 0) {
     return alert("You have no tokens.");
   }
 
-  const hold = PORTFOLIO[t.id].amount;
+  const hold = toNum(PORTFOLIO[t.id].amount, 0);
   const sellAmount = hold * (percent / 100);
   const value = sellAmount * t.price;
 
   const fee = value * 0.01;
   const net = value - fee;
 
-  PORTFOLIO[t.id].amount -= sellAmount;
+  PORTFOLIO[t.id].amount = hold - sellAmount;
   if (PORTFOLIO[t.id].amount <= 0.0000001) {
     delete PORTFOLIO[t.id];
   }
